@@ -1,0 +1,10 @@
+# 版本号
+CMAKE_MINIMUM_REQUIRED(VERSION 3.12)
+
+# 工程总名称
+PROJECT(libevent_example)
+
+# 添加子目录
+ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/src/first)
+ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/src/first_server)
+ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/src/second_server)
