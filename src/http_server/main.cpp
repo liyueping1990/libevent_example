@@ -1,10 +1,31 @@
+/*/*******************************************************************************
+**                                                                            **
+**                     Jiedi(China nanjing)Ltd.                               **
+**	               创建：丁宋涛 夏曹俊，此代码可用作为学习参考                **
+*******************************************************************************/
+
+/*****************************FILE INFOMATION***********************************
+**
+** Project       : Libevent C＋＋高并发网络编程
+** Contact       : xiacaojun@qq.com
+**  博客   : http://blog.csdn.net/jiedichina
+**	视频课程 : 网易云课堂	http://study.163.com/u/xiacaojun
+			   腾讯课堂		https://jiedi.ke.qq.com/
+			   csdn学院		http://edu.csdn.net/lecturer/lecturer_detail?lecturer_id=961
+**             51cto学院	http://edu.51cto.com/lecturer/index/user_id-12016059.html
+** 			   老夏课堂		http://www.laoxiaketang.com
+**
+**  Libevent C＋＋高并发网络编程 课程群 ：1003847950 加入群下载代码和交流
+**   微信公众号  : jiedi2007
+**		头条号	 : 夏曹俊
+**
+*****************************************************************************
+//！！！！！！！！！ Libevent C＋＋高并发网络编程 课程  QQ群：1003847950 下载代码和交流*/
 #include <event2/event.h>
 #include <event2/listener.h>
 #include <event2/http.h>
 #include <event2/keyvalq_struct.h>
 #include <event2/buffer.h>
-#include <event2/http_struct.h>
-
 #include <string.h>
 #ifndef _WIN32
 #include <signal.h>
@@ -35,7 +56,6 @@ void http_cb(struct evhttp_request *request, void *arg)
         break;
     }
     cout << "cmdtype:" << cmdtype << endl;
-
     // 消息报头
     evkeyvalq *headers = evhttp_request_get_input_headers(request);
     cout << "====== headers ======" << endl;
@@ -73,18 +93,38 @@ void http_cb(struct evhttp_request *request, void *arg)
         filepath += DEFAULTINDEX;
     }
     //消息报头
+    evkeyvalq *outhead = evhttp_request_get_output_headers(request);
+    //  要支持 图片 js css 下载zip文件
+    //  获取文件的后缀
+    // ./root/index.html
+    int pos = filepath.rfind('.');
+    string postfix = filepath.substr(pos + 1, filepath.size() - (pos + 1));
+    if (postfix == "jpg" || postfix == "gif" || postfix == "png")
+    {
+        string tmp = "image/" + postfix;
+        evhttp_add_header(outhead, "Content-Type", tmp.c_str());
+    }
+    else if (postfix == "zip")
+    {
+        evhttp_add_header(outhead, "Content-Type", "application/zip");
+    }
+    else if (postfix == "html")
+    {
+        evhttp_add_header(outhead, "Content-Type", "text/html;charset=UTF8");
+        //evhttp_add_header(outhead, "Content-Type", "text/html");
+    }
+    else if (postfix == "css")
+    {
+        evhttp_add_header(outhead, "Content-Type", "text/css");
+    }
+
+
 
     //读取html文件返回正文
-    filepath = "E:\\Code\\test\\libevent_example\\src\\http_server\\index.html";
-    //filepath = "E:\\Code\\test\\libevent_example\\src\\http_server\\test.jpg";
     FILE *fp = fopen(filepath.c_str(), "rb");
     if (!fp)
     {
-        evbuffer *outbuf = evhttp_request_get_output_buffer(request);
-
-        const char* reason = "open file failed";
-        evbuffer_add(outbuf, reason, strlen(reason));
-        evhttp_send_reply(request, HTTP_NOTFOUND, reason, outbuf);
+        evhttp_send_reply(request, HTTP_NOTFOUND, "", 0);
         return;
     }
     evbuffer *outbuf = evhttp_request_get_output_buffer(request);
@@ -95,14 +135,8 @@ void http_cb(struct evhttp_request *request, void *arg)
         evbuffer_add(outbuf, buf, len);
     }
     fclose(fp);
-
-    evkeyvalq* outhead = evhttp_request_get_output_headers(request);
-    //request->output_headers;
-    evhttp_add_header(outhead, "Content-Type", "image/jpg");
     evhttp_send_reply(request, HTTP_OK, "", outbuf);
 }
-
-
 int main()
 {
 #ifdef _WIN32
@@ -135,6 +169,8 @@ int main()
 
     //3   设定回调函数
     evhttp_set_gencb(evh, http_cb, 0);
+
+
 
     //事件分发处理
     if (base)
