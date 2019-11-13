@@ -27,10 +27,7 @@ static void kill(int sock, short which, void* arg)
     {
         event_del(ev);
         event_add(ev, NULL);
-    }
-
-
-    
+    }    
 }
 
 int main(int argc, char* atgv[])
